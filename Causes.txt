@@ -1,0 +1,28 @@
+Cancer
+Communicable+Maternal+Neonatal+Nutritional
+	HIV/AIDS
+	Diarrhea+Respiratory+Infectious
+	Neglected Tropical+Malaria
+	Other Communicable Diseases
+Maternal disorders
+Neonatal disorders
+Nutritional Deficiencies
+Non-Communicable Diseases
+	Neoplasm
+	CardioVascular
+	ChronicRespiratory
+	ChronicLever
+	Digestive
+	Neurological Disroders
+	Mental+substance use
+	Diabeters+Urogenial+blood+endocrine
+	Musculo Skeleton
+	Other Non-Communicable Diseases
+	
+Injuries
+	Transport Injuries
+	Unintentional injuries
+	self harm injuries + interpersonal violence
+	force of nature + war + legal intervention
+	
+	

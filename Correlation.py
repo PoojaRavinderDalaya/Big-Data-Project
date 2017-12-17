@@ -23,12 +23,15 @@ if __name__ == "__main__":
 
     #Correlation of Topics vs Mortality Rates
     corrVec = []
+	
+	#Run a loop to compute correlations between all topics
     for cntr in range(1600,2003):
         second = csv[:, cntr].astype(float)
         third = csv[:, 2011].astype(float) #Mortality Rate
         a = []
         b = []
-
+	
+		#To eliminate nan and inf values
         for i in range(len(second)):
             if (math.isnan(second[i]) or math.isnan(third[i])):
                 continue
@@ -38,10 +41,16 @@ if __name__ == "__main__":
 
         a = np.asarray(a)
         b = np.asarray(b)
-        seriesX = sc.parallelize(a)
+        
+		#Parallelize the input arrays
+		seriesX = sc.parallelize(a)
         seriesY = sc.parallelize(b)
+		
+		#Compute the correlation
         corrval = Statistics.corr(seriesX, seriesY, method="pearson")
-        corrVec.append((cntr,corrval))
+        
+		#Append to the final list to get top 10 positively and negatively correlated topics
+		corrVec.append((cntr,corrval))
 
     print(corrVec)
     

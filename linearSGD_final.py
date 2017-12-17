@@ -59,7 +59,7 @@ if __name__ == '__main__':
     print("Mean Squared Training Error = " + str(MSE))
 
     # Save and load model
-    #model.save(sc, app.root_path+"/Models/pythonLinearRegressionWithSGDModel_chronic")
+    model.save(sc, app.root_path+"/Models/pythonLinearRegressionWithSGDModel_chronic")
     #sameModel = LinearRegressionModel.load(sc, app.root_path+"/Models/pythonLinearRegressionWithSGDModel_chronic")
 
     ###################################################
@@ -84,7 +84,7 @@ if __name__ == '__main__':
     parsedPredictData = data.map(lambda x: parsePoint(x, 10, 25, "predict"))#.map(lambda x: x[1])
     prevData = data.map(lambda x: parsePoint(x, 34, 1, "predict"))
     PredLine = parsedPredictData.map(lambda p: (p[0],model.predict(p[1])))
-    PredLine.saveAsTextFile(app.root_path + "/../data/chronic_prediction_2015.csv")
+    #PredLine.saveAsTextFile(app.root_path + "/../data/chronic_prediction_2015.csv")
 
     diff = prevData.join(PredLine).map(lambda x:getDifference(x))\
         .sortBy(lambda x:x[1]).collect()
@@ -120,7 +120,7 @@ if __name__ == '__main__':
     dataPrint = data_new.filter(lambda x: x[0] in counties).collect()
     for x in dataPrint:
         row = []
-        with open(app.root_path + "/../data/Diarrhea_LR_" + str(x[0]) + ".csv", 'w') as out:
+        with open(app.root_path + "/../data/Chronic_LR_" + str(x[0]) + ".csv", 'w') as out:
             for i in range(39):
                 j = 1980
                 row.append([j + i, x[1][i]])
@@ -128,7 +128,9 @@ if __name__ == '__main__':
             csv_out.writerows(row)
 
 
-
+    ######################################################
+    # Make csv for actual and predicted values through 2006 to 2014
+    ######################################################
     counties = ["Barrow County","San Juan County"]
     for i in range(2006, 2015):
         for ii in ["00000","00001"]:
@@ -143,15 +145,15 @@ if __name__ == '__main__':
                                 target.write(str(i) + "," + y[1] + "," + y[2] + "\n")
                             else:
                                 target.write(str(i) + ", ," + y[1] + "\n")
-'''
+
     sc.stop()
     
 
     ##############################################
-    #plotting the graph for the two counties
+    # plotting the graph for the two counties
     ##############################################
     for i in counties:
-        with open(app.root_path + "/../data/LR_"+str(i)+".csv", 'r') as file:
+        with open(app.root_path + "/../data/LR_"+str(i).replace(" ","_")+".csv", 'r') as file:
             plots = csv.reader(file, delimiter=',')
             year =[]
             y=[]
@@ -164,4 +166,3 @@ if __name__ == '__main__':
         plt.plot(year, y_pred, label="Predicted value")
         plt.ylim(ymin=150)
         plt.savefig(app.root_path + "/../result/LR_"+str(i)+".png")
-    '''

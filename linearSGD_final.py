@@ -30,6 +30,10 @@ def toCSVLine(data):
 def getDifference(line):
     return (line[0],abs(float(line[1][0][0])-float(line[1][1])))
 
+def append(x):
+    x[1][0].append(str(x[1][1]))
+    return (x[0],x[1][0])
+
 if __name__ == '__main__':
     sc = SparkContext()
 
@@ -61,7 +65,7 @@ if __name__ == '__main__':
     ###################################################
     #running for test data
     ##################################################
-    '''for i in range(1,10):
+    for i in range(1,10):
         parsedTestData = data.map(lambda x: parsePoint(x, i, 25, "test"))#.map(lambda x: x[1])
         valuesAndPredsTest = parsedTestData.map(lambda p: (p[0],p[1].label, model.predict(p[1].features)))
         lines = valuesAndPredsTest.map(toCSVLine)
@@ -72,7 +76,7 @@ if __name__ == '__main__':
                       .map(lambda vp: (vp[1] - vp[2]) ** 2) \
                       .reduce(lambda x, y: x + y) / valuesAndPredsTest.count()
         print("Mean Squared Testing Error for year "+ str(i+j)+"= " + str(MSE_test))
-'''
+
     #####################################################
     # Predicting values for which actual are not given
     # and then taking top 2 counties and bottom 2 counties for
@@ -80,16 +84,20 @@ if __name__ == '__main__':
     parsedPredictData = data.map(lambda x: parsePoint(x, 10, 25, "predict"))#.map(lambda x: x[1])
     prevData = data.map(lambda x: parsePoint(x, 34, 1, "predict"))
     PredLine = parsedPredictData.map(lambda p: (p[0],model.predict(p[1])))
+    PredLine.saveAsTextFile(app.root_path + "/../data/chronic_prediction_2015.csv")
+
     diff = prevData.join(PredLine).map(lambda x:getDifference(x))\
         .sortBy(lambda x:x[1]).collect()
-    j = 2015
-    PredLine.saveAsTextFile(app.root_path + "/../data/chronic_prediction_" + str(j) + ".csv")
-    
+
     # Put 2015 predicted data into base data RDD to predict more
     data_new = data.map(lambda x :x.split(",")).map(lambda x : (x[0],x[1:]))\
-          .join(PredLine).map(lambda x:(x[0],x[1][0],str(x[1][1])))
+          .join(PredLine).map(lambda x: append(x))
 
-'''
+    # Predict 2016 through 2018
+    for i in range(2016,2019):
+        new_pred = data_new.map(lambda p: (p[0],model.predict(p[1][-25:])))
+        data_new = data_new.join(new_pred).map(lambda x: append(x))
+
     # Top 2 counties
     top2 = diff[0:2]
     print(top2)
@@ -103,11 +111,25 @@ if __name__ == '__main__':
     ##################################################
     # Make csv for the best and the worst county
     ##################################################
-    #counties = []
-    counties = ['San Miguel County', 'Bristol Bay Borough']
-    #counties.append(top2[0][0])
-    #counties.append(bottom2[1][0])
+    counties = []
+    #counties = ['San Miguel County', 'Bristol Bay Borough']
+    counties.append(top2[1][0])
+    counties.append(bottom2[0][0])
     print(counties)
+
+    dataPrint = data_new.filter(lambda x: x[0] in counties).collect()
+    for x in dataPrint:
+        row = []
+        with open(app.root_path + "/../data/Diarrhea_LR_" + str(x[0]) + ".csv", 'w') as out:
+            for i in range(39):
+                j = 1980
+                row.append([j + i, x[1][i]])
+            csv_out = csv.writer(out)
+            csv_out.writerows(row)
+
+
+
+    counties = ["Barrow County","San Juan County"]
     for i in range(2006, 2015):
         for ii in ["00000","00001"]:
             with open(app.root_path + "/../data/chronic_prediction_" + str(i) + ".csv/part-"+ii, "r") as file:
@@ -121,34 +143,14 @@ if __name__ == '__main__':
                                 target.write(str(i) + "," + y[1] + "," + y[2] + "\n")
                             else:
                                 target.write(str(i) + ", ," + y[1] + "\n")
-
-    
-
-    ###################################################
-    # Add predicted value to the CSV
-    ###################################################
-
+'''
     sc.stop()
-  '''  '''
-    ###############################################
-    #read the values for first two counties
-    ##############################################
-    for i in range(2006,2014):
-        with open(app.root_path+"/../data/cancer_prediction_"+str(i)+".csv/part-00000","r") as file:
-            for j, x in enumerate(file):
-                if(j==1):
-                    with open(app.root_path+"/../data/LR_AberVille.csv", 'a+') as target:
-                        target.write(str(i)+","+x)
-                elif(j==2):
-                    with open(app.root_path+"/../data/LR_Acardia.csv", 'a+') as target:
-                        target.write(str(i)+","+x)
-                elif(j>2):
-                    break
+    
 
     ##############################################
     #plotting the graph for the two counties
     ##############################################
-    for i in {"AberVille","Acardia"}:
+    for i in counties:
         with open(app.root_path + "/../data/LR_"+str(i)+".csv", 'r') as file:
             plots = csv.reader(file, delimiter=',')
             year =[]
